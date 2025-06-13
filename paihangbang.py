@@ -1,49 +1,69 @@
+import streamlit as st
 import requests
-import json
 
-API_KEY = "f71ab4f1-900c-43a7-8ea2-9b4a440b008e"   # 换成你的key
-URL = f"https://rpc.helius.xyz/?api-key={API_KEY}"
+# 固定 KEY 变量（你可以随时替换为你的新key）
+API_KEY = "f71ab4f1-900c-43a7-8ea2-9b4a440b008e"
+url = f"https://rpc.helius.xyz/?api-key={API_KEY}"
 
-methods = [
-    {"method": "getHealth", "params": []},
-    {"method": "getSlot", "params": []},
-    {"method": "getVersion", "params": []},
-    {"method": "getBlockHeight", "params": []},
-    {"method": "getBalance", "params": ["4rToHJLjcdDjtuXupVqCXgMWBaJcxLtQ6dZVMZAsCUsq"]},
-    {"method": "getAccountInfo", "params": ["4rToHJLjcdDjtuXupVqCXgMWBaJcxLtQ6dZVMZAsCUsq"]},
-    {"method": "getSignaturesForAddress", "params": ["4rToHJLjcdDjtuXupVqCXgMWBaJcxLtQ6dZVMZAsCUsq"]},
-    # 高级
-    {"method": "searchTransactions", "params": {"query": {"tokenTransfers": {"mint": "4rToHJLjcdDjtuXupVqCXgMWBaJcxLtQ6dZVMZAsCUsq"}}, "limit": 2}},
-]
+st.title("Helius API KEY 功能检测与可视化")
 
-def do_test(method, params):
-    if method == "searchTransactions":
-        rpc_params = [params]
-    else:
-        rpc_params = params
+st.info("当前测试的是基础Solana RPC方法。后续所有开发/检测结果都将显示在本页面画布。")
+
+# 提供几个可选方法供选择（你也可以继续扩展）
+method_options = {
+    "getVersion（节点版本）": {
+        "method": "getVersion",
+        "params": []
+    },
+    "getSlot（当前区块高度）": {
+        "method": "getSlot",
+        "params": []
+    },
+    "getHealth（节点健康状态）": {
+        "method": "getHealth",
+        "params": []
+    },
+    "getBalance（钱包余额）": {
+        "method": "getBalance",
+        "params": ["4rToHJLjcdDjtuXupVqCXgMWBaJcxLtQ6dZVMZAsCUsq"]
+    },
+    "getAccountInfo（账户信息）": {
+        "method": "getAccountInfo",
+        "params": ["4rToHJLjcdDjtuXupVqCXgMWBaJcxLtQ6dZVMZAsCUsq"]
+    },
+    "searchTransactions（高级-测试权限）": {
+        "method": "searchTransactions",
+        "params": [{
+            "query": {
+                "tokenTransfers": {
+                    "mint": "4rToHJLjcdDjtuXupVqCXgMWBaJcxLtQ6dZVMZAsCUsq"
+                }
+            },
+            "limit": 2
+        }]
+    }
+}
+
+sel_method = st.selectbox("请选择要检测的API方法：", list(method_options.keys()))
+
+if st.button("运行检测"):
+    st.write(f"正在请求 `{sel_method}` ...")
+    m = method_options[sel_method]
     payload = {
         "jsonrpc": "2.0",
         "id": 1,
-        "method": method,
-        "params": rpc_params
+        "method": m["method"],
+        "params": m["params"]
     }
     try:
-        resp = requests.post(URL, json=payload, timeout=15)
-        print(f"\n>>> 测试方法: {method} | 状态码: {resp.status_code}")
+        resp = requests.post(url, json=payload, timeout=15)
+        st.write(f"状态码: {resp.status_code}")
         try:
-            data = resp.json()
-            if "error" in data:
-                print("  错误:", data["error"].get("message", data["error"]))
-            else:
-                # 只打印关键信息
-                print("  成功返回：", json.dumps(data.get("result", data), ensure_ascii=False, indent=2)[:500], "...")
+            st.json(resp.json())
         except Exception:
-            print("  非标准JSON：", resp.text[:200])
+            st.write("非标准JSON返回：", resp.text)
     except Exception as e:
-        print("  请求异常：", e)
+        st.error(f"请求失败: {e}")
 
-if __name__ == "__main__":
-    print("=== Helius Key功能检测 ===")
-    for m in methods:
-        do_test(m["method"], m["params"])
-    print("=== 检测结束 ===")
+st.write("---")
+st.info("选择不同方法测试，能返回数据说明你有该方法权限。返回报错/未找到/401说明权限不够。后续所有开发/数据分析都在本页画布上继续。")
