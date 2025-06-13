@@ -1,7 +1,7 @@
 import requests
 import json
 
-API_KEY = "你的 Helius API KEY"   # 换成你的key
+API_KEY = "f71ab4f1-900c-43a7-8ea2-9b4a440b008e"   # 换成你的key
 URL = f"https://rpc.helius.xyz/?api-key={API_KEY}"
 
 methods = [
