@@ -1,38 +1,28 @@
-import streamlit as st
-import pandas as pd
 import requests
-from datetime import datetime, timedelta
+import streamlit as st
 
-# ============ 配置区 ============
-API_KEY = "你的helius_api_key"   # 直接写死
-DEFAULT_TOKEN_MINT = "4rToHJLjcdDjtuXupVqCXgMWBaJcxLtQ6dZVMZAsCUsq"
+API_KEY = "你的helius_api_key"   # 换成你自己的
+TOKEN_MINT = "4rToHJLjcdDjtuXupVqCXgMWBaJcxLtQ6dZVMZAsCUsq"
 
-# ============ 页面UI ============
-st.title("Solana 新币盈利钱包排行工具（前30名）")
-st.write("输入Token Mint地址，自动分析7天Swap记录，输出前30名盈利钱包。")
+st.title("Helius API 拉取测试")
 
-token_mint = st.text_input("Token Mint地址", value=DEFAULT_TOKEN_MINT)
-start = st.button("开始分析")
-
-if start:
-    # ...其余逻辑和上面完全一样...
-    # 下面是API请求部分
-    start_time = int((datetime.utcnow() - timedelta(days=7)).timestamp())
-    helius_url = f"https://api.helius.xyz/v1/search/transactions?api-key={API_KEY}"
+if st.button("测试API"):
+    url = f"https://api.helius.xyz/v1/search/transactions?api-key={API_KEY}"
     headers = {"Content-Type": "application/json"}
     body = {
         "query": {
             "tokenTransfers": {
-                "mint": token_mint
+                "mint": TOKEN_MINT
             }
         },
-        "limit": 1000,
+        "limit": 5,
         "before": None
     }
-    resp = requests.post(helius_url, headers=headers, json=body)
-    if resp.status_code != 200:
-        st.error("API拉取失败，请检查API KEY和Token地址")
-        st.stop()
-
-    data = resp.json()
-    # ...后续数据分析与展示同前...
+    r = requests.post(url, headers=headers, json=body)
+    st.write(f"状态码: {r.status_code}")
+    try:
+        data = r.json()
+        st.json(data)
+    except Exception as e:
+        st.write("不是标准json格式返回！")
+        st.write(r.text)
